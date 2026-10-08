@@ -1,0 +1,2 @@
+CLERK_PUBLISHABLE_KEY=pk_test_demo
+CLERK_SECRET_KEY=sk_test_demo
