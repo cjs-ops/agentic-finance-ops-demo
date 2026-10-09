@@ -1,16 +1,26 @@
-# syntax=docker/dockerfile:1
-FROM python:3.12-slim
+version: '3.9'
 
-WORKDIR /app
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: finance-ops-api
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY:-pk_test_demo}
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY:-sk_test_demo}
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
 
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY . .
-
-EXPOSE 8000
-
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: finance-ops-streamlit
+    ports:
+      - "8501:8501"
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: streamlit run streamlit_app.py --server.address 0.0.0.0 --server.port 8501

@@ -1,11 +1,25 @@
 from fastapi import APIRouter
 
-router = APIRouter(prefix="/health", tags=["health"])
+router = APIRouter(prefix="/workflow", tags=["workflow"])
 
 
-@router.get("/ready")
-def ready() -> dict:
+@router.get("/status")
+def workflow_status() -> dict:
     return {
-        "ready": True,
-        "checks": ["api", "workflow", "audit-log", "clerk-config-ready"],
+        "status": "ready",
+        "workflow": "finance-variance-and-reconciliation",
+        "steps": [
+            "extract",
+            "normalize",
+            "reconcile",
+            "variance-analysis",
+            "human-approval",
+            "final-summary",
+        ],
+        "controls": [
+            "source-citation-trace",
+            "SOX-style materiality review",
+            "human-in-the-loop approval",
+            "audit-log-writer",
+        ],
     }

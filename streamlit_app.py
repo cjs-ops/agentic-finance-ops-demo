@@ -1,55 +1,34 @@
-# Deployment guide
+import streamlit as st
 
-This repository is designed to run locally with Docker Compose and extend to a Kubernetes deployment model.
+st.set_page_config(page_title="Finance Ops Demo", page_icon="💼", layout="wide")
 
-## Local container run
-```bash
-docker-compose up --build
-```
+st.title("Finance Ops Demo")
+st.caption("Variance analysis, reconciliation checks, and audit-ready summaries")
 
-## Representative Kubernetes deployment
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: finance-ops-demo
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: finance-ops-demo
-  template:
-    metadata:
-      labels:
-        app: finance-ops-demo
-    spec:
-      containers:
-        - name: api
-          image: finance-ops-demo:latest
-          ports:
-            - containerPort: 8000
-          env:
-            - name: CLERK_PUBLISHABLE_KEY
-              value: "pk_test_demo"
-            - name: CLERK_SECRET_KEY
-              value: "sk_test_demo"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: finance-ops-demo
-spec:
-  selector:
-    app: finance-ops-demo
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 8000
-```
+if st.button("Run variance review"):
+    sample_gl = [
+        {"account": "Revenue", "amount": 8_725_000, "source_system": "Oracle ERP GL"},
+        {"account": "Payroll", "amount": 3_450_000, "source_system": "Oracle ERP GL"},
+        {"account": "Marketing", "amount": 680_000, "source_system": "Oracle ERP GL"},
+    ]
+    forecast = [
+        {"account": "Revenue", "amount": 8_900_000, "source_system": "FP&A Forecast"},
+        {"account": "Payroll", "amount": 3_300_000, "source_system": "FP&A Forecast"},
+        {"account": "Marketing", "amount": 620_000, "source_system": "FP&A Forecast"},
+    ]
 
-## Recommended production hardening
-- Add health checks for `/health/ready` and `/workflow/status`.
-- Store all secrets in a managed secret store, not in source control.
-- Add separate Kubernetes namespaces for dev/test/prod.
-- Integrate OpenTelemetry or logging agents for audit trail observability.
-- Enforce approval roles before final variance signoff in a real client deployment.
+    from app.agents.reconciliation_agent import reconcile_gl_to_forecast
+    from app.agents.variance_agent import analyze_variance
+
+    reconciliation = reconcile_gl_to_forecast(sample_gl, forecast)
+    variance = analyze_variance(sample_gl, forecast)
+
+    st.subheader("Variance summary")
+    st.write({
+        "status": reconciliation["status"],
+        "total_variance": variance["total_variance"],
+        "key_findings": variance["key_findings"],
+    })
+
+    st.subheader("Audit controls")
+    st.json(reconciliation["control_checks"])
